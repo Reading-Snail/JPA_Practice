@@ -10,12 +10,16 @@ import lombok.Setter;
 public class OrderItem {
 
     @Id @GeneratedValue
-    @Column(name="ORDERITEM_ID")
+    @Column(name="ORDER_ITEM_ID")
     private Long id;
-    @Column
-    private Long itemId;
-    @Column
-    private Long orderId;
+
+    @ManyToOne
+    @JoinColumn(name = "ITEM_ID")
+    private Item item;
+
+    @ManyToOne
+    @JoinColumn(name = "ORDER_ID")
+    private Order order;
 
     private int orderPrice;
     private int count;
