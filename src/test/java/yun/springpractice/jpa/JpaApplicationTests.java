@@ -14,64 +14,71 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @SpringBootTest
-class JpaApplicationTests {
+class EntityTests {
 
 	@Autowired
 	EntityManager em;
-	@Test
-	void contextLoads() {
-		System.out.println("contextLoads");
-	}
 
 	@Test
 	@Transactional
-	void EntityPersistTest(){
-		Order origin = new Order();
-		em.persist(origin);
-		Order order = em.find(Order.class, 1);
-		//Member member = order.getMember();	//주문한 회원 참조 사용
-		assertEquals(origin, order);
+	void OrderTest(){
+		Order orderSet = new Order();
+		em.persist(orderSet);
+		em.flush();
+		Order orderGet = em.find(Order.class, 1);
+		assertEquals(orderSet, orderGet);
 	}
-	@Test // 객체 그래프 탐색 1
+	@Test
+	@Transactional
+	void MemeberTest(){
+		//Given
+		Member memberSet = new Member();
+		em.persist(memberSet);
+		em.flush();
+		//When
+		Member memberGet = em.find(Member.class, 1L);
+		//Member member = order.getMember();	//주문한 회원 참조 사용
+		//Then
+		assertEquals(memberSet, memberGet);
+	}
+	@Test // 객체 그래프 탐색 Order -> Member
 	@Transactional
 	void EntityGraphExploreTest1(){
 		// Given
-		Order originOrder = new Order();
-		originOrder.setId(25L);
-		Member originMember = new Member();
-		originMember.setId(100L);
-		originOrder.setMember(originMember);
-
+		Order orderSet = new Order();
+		Member memberSet = new Member();
+		orderSet.setMember(memberSet);	// 다대일 관계이므로 set으로 설정 할 수 있습니다.
+		em.persist(orderSet);
+		em.flush();
 		// When
-		em.persist(originOrder);
-		Order order = em.find(Order.class, 25L);
-		Member member = order.getMember();
-
+		Order orderGet = em.find(Order.class, 1L);
+		Member memberGet = orderGet.getMember();
 		// Then
-		System.out.println("member.id : " + originMember.getId());
-		System.out.println("member.id : " + member.getId());
+		System.out.println("memberSet.id : " + memberSet.getId());
+		System.out.println("memberGet.id : " + memberGet.getId());
 
-		assertEquals(originMember, member);
+		assertEquals(memberSet, memberGet);
 	}
 	@Test // 객체 그래프 탐색 2
 	@Transactional
 	void EntityGraphExploreTest2(){
 		// Given
-		Order originOrder = new Order();
-		originOrder.setId(1L);
-		OrderItem originOrderItem1 = new OrderItem();
-		originOrderItem1.setId(100L);
-		originOrder.addOrderItem(originOrderItem1);
-		em.persist(originOrder);
-
+		Order orderSet = new Order();
+		OrderItem orderItemSet1 = new OrderItem();
+		orderSet.addOrderItem(orderItemSet1);	// 일대다의 관계이므로 set이 아닌 add로 추가해줍니다.
+		OrderItem orderItemSet2 = new OrderItem();
+		orderSet.addOrderItem(orderItemSet2);	// 일대다의 관계이므로 set이 아닌 add로 추가해줍니다.
+		em.persist(orderSet);
+		em.flush();
 		// When
-		Order order = em.find(Order.class, 1L);
-		OrderItem orderItem1 = order.getOrderItems().get(0);
-
+		Order orderGet = em.find(Order.class, 1L);
+		OrderItem orderItem1 = orderGet.getOrderItems().get(0);
+		OrderItem orderItem2 = orderGet.getOrderItems().get(1);
 		// Then
-		System.out.println("member.id : " + order.getId());
-		System.out.println("member.id : " + orderItem1.getId());
+		System.out.println("orderSet.id : " + orderGet.getId());
+		System.out.println("orderItem1.id : " + orderItem1.getId());
+		System.out.println("orderItem2.id : " + orderItem2.getId());
 
-		assertEquals(originOrderItem1, orderItem1);
+		assertEquals(orderItem1.getId()+1L, orderItem2.getId());
 	}
 }
